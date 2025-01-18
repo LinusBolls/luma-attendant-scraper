@@ -110,10 +110,9 @@ export class LumaClient {
   }
 
   public readonly event = {
-    getEvent: async (eventId: string) => {
-      const url = 'https://lu.ma/' + eventId;
+    getEvent: async (eventUrl: string) => {
 
-      const res = await fetch(url, {
+      const res = await fetch(eventUrl, {
         headers: {
           Cookie: `luma.did=brapih2xmppo8o6jtmk495jfucxr8l; luma.native-referrer=https%3A%2F%2Flu.ma%2F; luma.evt-KZ3GVPQwrc0OFpU.referred_by=hzdtCD; luma.auth-session-key=${this.authToken}`,
         },

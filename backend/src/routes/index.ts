@@ -1,13 +1,7 @@
-import fs from "fs"
-
-import { env } from 'env';
 import type { FastifyInstance } from 'fastify';
+import { getLinkedinProfile } from 'getLinkedinProfile';
 import { linkedinJobQueue } from 'jobQueue';
-import { LinkedinClient } from 'linkedin';
-import { parseCodeTags } from 'linkedin/parseCodeTags';
-import { parseProfileSections } from 'linkedin/requests/getProfileSections';
 import { LumaClient } from 'luma';
-import { parse as parseHtml } from 'node-html-parser';
 
 const parseEventIdFromLumaUrl = (url: string): string | null => {
   try {
@@ -19,44 +13,6 @@ const parseEventIdFromLumaUrl = (url: string): string | null => {
   }
 };
 
-async function getProfileInfo(linkedinHandle: string) {
-  const linkedin = new LinkedinClient(
-    env.linkedin.csrfToken,
-    env.linkedin.sessionToken
-  );
-
-  const res = await linkedin.profile.getPage(
-    'https://www.linkedin.com' + linkedinHandle
-  );
-  const rawPage = await res.text();
-
-  const page = parseHtml(rawPage);
-
-  const codeTags = parseCodeTags(page);
-
-  const profileUrns = codeTags
-    .map((tag) => {
-      const profileUrn =
-        tag.data?.data?.data?.identityDashProfilesByMemberIdentity?.[
-          '*elements'
-        ]?.[0];
-
-      return profileUrn;
-    })
-    .filter((i) => i != null);
-
-  const profileUrn = profileUrns[0];
-
-  if (!profileUrn) {
-    throw new Error("[getProfileInfo] failed to get profile urn");
-  }
-  const rawProfile = await linkedin.profile.getSections(profileUrn)
-
-  const profileSections = parseProfileSections(rawProfile);
-
-  return { data: profileSections };
-}
-
 export async function routes(fastify: FastifyInstance): Promise<void> {
   fastify.get('/health', async (_, reply) => {
     reply.send({ data: { ok: true } });
@@ -65,14 +21,9 @@ export async function routes(fastify: FastifyInstance): Promise<void> {
     try {
       const eventUrl = (req.body as any).eventUrl;
 
-      // account for the client directly sending an eventId instead of a full URL
-      const eventId = eventUrl.includes('/')
-        ? parseEventIdFromLumaUrl(eventUrl)!
-        : eventUrl;
-
       const authToken = (req.body as any).authToken;
 
-      if (!eventId || !authToken) {
+      if (!eventUrl || !authToken) {
         reply.code(400).send({
           error: {
             message: 'Bad Request',
@@ -83,7 +34,7 @@ export async function routes(fastify: FastifyInstance): Promise<void> {
 
       const luma = new LumaClient(authToken);
 
-      const event = await luma.event.getEvent(eventId);
+      const event = await luma.event.getEvent(eventUrl);
 
       if (!event.ticketKey) {
         reply.code(403).send({
@@ -105,7 +56,9 @@ export async function routes(fastify: FastifyInstance): Promise<void> {
             return { luma: guest, linkedin: null };
           }
           return await linkedinJobQueue.execute(async () => {
-            const profileData = await getProfileInfo(guest.linkedin_handle!);
+            const profileData = await getLinkedinProfile(
+              guest.linkedin_handle!
+            );
 
             return { luma: guest, linkedin: profileData.data };
           });
