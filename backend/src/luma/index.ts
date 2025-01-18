@@ -1,4 +1,4 @@
-import * as cookie from "cookie";
+import * as cookie from 'cookie';
 
 export interface Guest {
   name: string;
@@ -30,64 +30,64 @@ export class LumaClient {
   constructor(private authToken: string) {}
 
   public static async requestEmailCode(email: string) {
-    await fetch("https://api.lu.ma/auth/email/start-with-email", {
+    await fetch('https://api.lu.ma/auth/email/start-with-email', {
       headers: {
-        accept: "application/json, text/plain, */*",
-        "accept-language": "en",
-        "content-type": "application/json",
-        priority: "u=1, i",
-        "sec-ch-ua":
+        accept: 'application/json, text/plain, */*',
+        'accept-language': 'en',
+        'content-type': 'application/json',
+        priority: 'u=1, i',
+        'sec-ch-ua':
           '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"macOS"',
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-site",
-        "x-luma-client-type": "luma-web",
-        "x-luma-client-version": "5247e4cbd7ebb4eca4dd4b0011e5dab38f0ea748",
-        "x-luma-web-url": "https://lu.ma/signin",
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"macOS"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site',
+        'x-luma-client-type': 'luma-web',
+        'x-luma-client-version': '5247e4cbd7ebb4eca4dd4b0011e5dab38f0ea748',
+        'x-luma-web-url': 'https://lu.ma/signin',
       },
-      referrer: "https://lu.ma/",
-      referrerPolicy: "strict-origin-when-cross-origin",
+      referrer: 'https://lu.ma/',
+      referrerPolicy: 'strict-origin-when-cross-origin',
       body: JSON.stringify({ email }),
-      method: "POST",
-      mode: "cors",
-      credentials: "include",
+      method: 'POST',
+      mode: 'cors',
+      credentials: 'include',
     });
   }
 
   public static async fromEmailCode(email: string, code: string) {
-    const res = await fetch("https://api.lu.ma/auth/email/sign-in-with-code", {
+    const res = await fetch('https://api.lu.ma/auth/email/sign-in-with-code', {
       headers: {
-        accept: "application/json, text/plain, */*",
-        "accept-language": "en",
-        "content-type": "application/json",
-        priority: "u=1, i",
-        "sec-ch-ua": '"Not A(Brand";v="8", "Chromium";v="132"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"macOS"',
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-site",
-        "x-luma-client-type": "luma-web",
-        "x-luma-client-version": "5247e4cbd7ebb4eca4dd4b0011e5dab38f0ea748",
-        "x-luma-web-url":
-          "https://lu.ma/signin?next=%2Fuser%2Fusr-RMcKtEE7BKGK22C",
+        accept: 'application/json, text/plain, */*',
+        'accept-language': 'en',
+        'content-type': 'application/json',
+        priority: 'u=1, i',
+        'sec-ch-ua': '"Not A(Brand";v="8", "Chromium";v="132"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"macOS"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site',
+        'x-luma-client-type': 'luma-web',
+        'x-luma-client-version': '5247e4cbd7ebb4eca4dd4b0011e5dab38f0ea748',
+        'x-luma-web-url':
+          'https://lu.ma/signin?next=%2Fuser%2Fusr-RMcKtEE7BKGK22C',
       },
-      referrer: "https://lu.ma/",
-      referrerPolicy: "strict-origin-when-cross-origin",
+      referrer: 'https://lu.ma/',
+      referrerPolicy: 'strict-origin-when-cross-origin',
       body: JSON.stringify({ email, code }),
-      method: "POST",
-      mode: "cors",
-      credentials: "include",
+      method: 'POST',
+      mode: 'cors',
+      credentials: 'include',
     });
     const data = await res.json();
 
-    const rawCookie = res.headers.get("set-cookie");
+    const rawCookie = res.headers.get('set-cookie');
 
     const parsedCookie = cookie.parse(rawCookie!);
 
-    const authToken = parsedCookie["luma.auth-session-key"]!;
+    const authToken = parsedCookie['luma.auth-session-key']!;
 
     const luma = new LumaClient(authToken);
 
@@ -111,33 +111,33 @@ export class LumaClient {
     ) => {
       const paginationCursorString = paginationCursor
         ? `&pagination_cursor=${paginationCursor}`
-        : "";
+        : '';
 
       const res = await fetch(
         `https://api.lu.ma/event/get-guest-list?event_api_id=${eventId}&ticket_key=${ticketKey}${paginationCursorString}&pagination_limit=100`,
         {
           headers: {
-            accept: "application/json, text/plain, */*",
-            "accept-language": "en",
-            priority: "u=1, i",
-            "sec-ch-ua":
+            accept: 'application/json, text/plain, */*',
+            'accept-language': 'en',
+            priority: 'u=1, i',
+            'sec-ch-ua':
               '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": '"macOS"',
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-site",
-            "x-luma-client-type": "luma-web",
-            "x-luma-client-version": "5247e4cbd7ebb4eca4dd4b0011e5dab38f0ea748",
-            "x-luma-web-url": "https://lu.ma/bkevcvsk?tk=hzdtCD",
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"macOS"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-site',
+            'x-luma-client-type': 'luma-web',
+            'x-luma-client-version': '5247e4cbd7ebb4eca4dd4b0011e5dab38f0ea748',
+            'x-luma-web-url': 'https://lu.ma/bkevcvsk?tk=hzdtCD',
             Cookie: `luma.auth-session-key=${this.authToken}`,
           },
-          referrer: "https://lu.ma/",
-          referrerPolicy: "strict-origin-when-cross-origin",
+          referrer: 'https://lu.ma/',
+          referrerPolicy: 'strict-origin-when-cross-origin',
           body: null,
-          method: "GET",
-          mode: "cors",
-          credentials: "include",
+          method: 'GET',
+          mode: 'cors',
+          credentials: 'include',
         }
       );
       const data: {

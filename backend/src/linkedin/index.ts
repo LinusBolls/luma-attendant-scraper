@@ -1,6 +1,6 @@
-import { getAuthHeaders } from "./getHeaders";
-import type { RequestConfig } from "./requestConfig";
-import { getProfileSections } from "./requests/getProfileSections";
+import { getAuthHeaders } from './getHeaders';
+import type { RequestConfig } from './requestConfig';
+import { getProfileSections } from './requests/getProfileSections';
 
 export class LinkedinClient {
   private getRequestConfig(): RequestConfig {
