@@ -6,6 +6,7 @@ type Job = {
   state: string;
   inserted: Date;
   ok: boolean;
+  error?: unknown;
 };
 
 class JobQueue {
@@ -28,7 +29,7 @@ class JobQueue {
           if (job.ok) {
             res(job.data as T);
           } else {
-            rej();
+            rej(job.error);
           }
         }
       })
@@ -46,6 +47,7 @@ class JobQueue {
       console.log('executing job');
       job.data = await job.exec();
     } catch (err) {
+      job.error = err;
       job.ok = false;
     }
 

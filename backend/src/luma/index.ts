@@ -2,13 +2,13 @@ import * as cookie from 'cookie';
 import { parse as parseHtml } from 'node-html-parser';
 
 export type GetLumaGuestsResponse = {
-  entries: Guest[];
+  entries: LumaGuest[];
   has_more: boolean;
   /** looks like "usr-4GrEc2C38FpcMmE" */
   next_cursor: string;
 };
 
-export interface Guest {
+export interface LumaGuest {
   name: string;
   /** looks like "usr-utQ0XFISWcR6xtm" */
   api_id: string;
@@ -203,6 +203,18 @@ export class LumaClient {
       const data: GetLumaGuestsResponse = await res.json();
 
       return data;
+    },
+    getAllGuests: async (eventId: string, ticketKey: string) => {
+      let guests: LumaGuest[] = [];
+      let cursor: string | null = null;
+      let hasMore = true;
+      while (hasMore) {
+        const data = await this.event.getGuests(eventId, ticketKey, cursor);
+        guests = guests.concat(data.entries);
+        cursor = data.next_cursor;
+        hasMore = data.has_more;
+      }
+      return guests;
     },
   };
 }

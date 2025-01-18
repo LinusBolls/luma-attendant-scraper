@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { getLinkedinProfile } from 'getLinkedinProfile';
 import { linkedinJobQueue } from 'jobQueue';
-import { GetLumaGuestsResponse, LumaClient } from 'luma';
+import { LumaClient, LumaGuest } from 'luma';
 
 export async function routes(fastify: FastifyInstance): Promise<void> {
   fastify.get('/health', async (_, reply) => {
@@ -35,10 +35,10 @@ export async function routes(fastify: FastifyInstance): Promise<void> {
         });
       }
 
-      let lumaGuests: GetLumaGuestsResponse;
+      let lumaGuests: LumaGuest[];
 
       try {
-        lumaGuests = await luma.event.getGuests(
+        lumaGuests = await luma.event.getAllGuests(
           event!.eventId,
           event!.ticketKey
         );
@@ -51,7 +51,7 @@ export async function routes(fastify: FastifyInstance): Promise<void> {
       }
 
       const guests = await Promise.all(
-        lumaGuests!.entries.map(async (guest) => {
+        lumaGuests!.map(async (guest) => {
           if (!guest.linkedin_handle) {
             return { luma: guest, linkedin: null };
           }
@@ -64,7 +64,11 @@ export async function routes(fastify: FastifyInstance): Promise<void> {
               return { luma: guest, linkedin: profileData.data };
             });
           } catch (err) {
-            console.error('Failed to get linkedin profile for guest:', guest);
+            console.error(
+              'Failed to get linkedin profile for guest:',
+              guest,
+              err
+            );
             return { luma: guest, linkedin: null };
           }
         })
