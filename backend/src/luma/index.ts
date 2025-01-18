@@ -86,10 +86,20 @@ export class LumaClient {
 
     const rawCookie = res.headers.get('set-cookie');
 
+    if (!rawCookie) {
+      throw new Error(
+        "Luma.fromEmailCode: Response didn't include set-cookie header"
+      );
+    }
     const parsedCookie = cookie.parse(rawCookie!);
 
-    const authToken = parsedCookie['luma.auth-session-key']!;
+    const authToken = parsedCookie['luma.auth-session-key'];
 
+    if (!authToken) {
+      throw new Error(
+        'Luma.fromEmailCode: Failed to get auth token from set-cookie header'
+      );
+    }
     const luma = new LumaClient(authToken);
 
     return {
@@ -108,20 +118,34 @@ export class LumaClient {
           Cookie: `luma.did=brapih2xmppo8o6jtmk495jfucxr8l; luma.native-referrer=https%3A%2F%2Flu.ma%2F; luma.evt-KZ3GVPQwrc0OFpU.referred_by=hzdtCD; luma.auth-session-key=${this.authToken}`,
         },
       });
-
+      if (!res.ok) {
+        throw new Error(
+          `[Luma.event.getEvent] Non-ok response: status ${res.status}`
+        );
+      }
       const rawPage = await res.text();
 
       const page = parseHtml(rawPage);
 
-      const el = page.querySelector('script#__NEXT_DATA__')!;
+      const el = page.querySelector('script#__NEXT_DATA__');
 
+      if (!el) {
+        throw new Error(
+          `[Luma.event.getEvent] Failed to find JSON script element in response`
+        );
+      }
       const content = JSON.parse(el.innerHTML);
 
-      const realEventId = content.props.pageProps.initialData.data.api_id
+      const realEventId = content.props.pageProps.initialData.data.api_id;
 
       const ticketKey =
         content.props.pageProps.initialData.data.guest_data.ticket_key;
 
+      if (!realEventId || !ticketKey) {
+        throw new Error(
+          `[Luma.event.getEvent] Failed to find eventId or ticketKey in response`
+        );
+      }
       return { eventId: realEventId, ticketKey };
     },
     /**
@@ -165,6 +189,11 @@ export class LumaClient {
           credentials: 'include',
         }
       );
+      if (!res.ok) {
+        throw new Error(
+          `[Luma.event.getGuests] Non-ok response: status ${res.status}`
+        );
+      }
       const data: {
         entries: Guest[];
         has_more: boolean;

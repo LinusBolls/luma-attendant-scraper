@@ -1,5 +1,13 @@
+import fs from "fs"
+
+import { env } from 'env';
 import type { FastifyInstance } from 'fastify';
+import { linkedinJobQueue } from 'jobQueue';
+import { LinkedinClient } from 'linkedin';
+import { parseCodeTags } from 'linkedin/parseCodeTags';
+import { parseProfileSections } from 'linkedin/requests/getProfileSections';
 import { LumaClient } from 'luma';
+import { parse as parseHtml } from 'node-html-parser';
 
 const parseEventIdFromLumaUrl = (url: string): string | null => {
   try {
@@ -10,6 +18,44 @@ const parseEventIdFromLumaUrl = (url: string): string | null => {
     throw new Error('failed to parse event id from luma url: ' + url);
   }
 };
+
+async function getProfileInfo(linkedinHandle: string) {
+  const linkedin = new LinkedinClient(
+    env.linkedin.csrfToken,
+    env.linkedin.sessionToken
+  );
+
+  const res = await linkedin.profile.getPage(
+    'https://www.linkedin.com' + linkedinHandle
+  );
+  const rawPage = await res.text();
+
+  const page = parseHtml(rawPage);
+
+  const codeTags = parseCodeTags(page);
+
+  const profileUrns = codeTags
+    .map((tag) => {
+      const profileUrn =
+        tag.data?.data?.data?.identityDashProfilesByMemberIdentity?.[
+          '*elements'
+        ]?.[0];
+
+      return profileUrn;
+    })
+    .filter((i) => i != null);
+
+  const profileUrn = profileUrns[0];
+
+  if (!profileUrn) {
+    throw new Error("[getProfileInfo] failed to get profile urn");
+  }
+  const rawProfile = await linkedin.profile.getSections(profileUrn)
+
+  const profileSections = parseProfileSections(rawProfile);
+
+  return { data: profileSections };
+}
 
 export async function routes(fastify: FastifyInstance): Promise<void> {
   fastify.get('/health', async (_, reply) => {
@@ -48,7 +94,23 @@ export async function routes(fastify: FastifyInstance): Promise<void> {
         return;
       }
 
-      const guests = await luma.event.getGuests(event.eventId, event.ticketKey);
+      const lumaGuests = await luma.event.getGuests(
+        event.eventId,
+        event.ticketKey
+      );
+
+      const guests = await Promise.allSettled(
+        lumaGuests.entries.map(async (guest) => {
+          if (!guest.linkedin_handle) {
+            return { luma: guest, linkedin: null };
+          }
+          return await linkedinJobQueue.execute(async () => {
+            const profileData = await getProfileInfo(guest.linkedin_handle!);
+
+            return { luma: guest, linkedin: profileData.data };
+          });
+        })
+      );
 
       reply.send({ data: { guests } });
       // eslint-disable-next-line
