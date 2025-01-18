@@ -1,6 +1,13 @@
 import * as cookie from 'cookie';
 import { parse as parseHtml } from 'node-html-parser';
 
+export type GetLumaGuestsResponse = {
+  entries: Guest[];
+  has_more: boolean;
+  /** looks like "usr-4GrEc2C38FpcMmE" */
+  next_cursor: string;
+};
+
 export interface Guest {
   name: string;
   /** looks like "usr-utQ0XFISWcR6xtm" */
@@ -111,7 +118,6 @@ export class LumaClient {
 
   public readonly event = {
     getEvent: async (eventUrl: string) => {
-
       const res = await fetch(eventUrl, {
         headers: {
           Cookie: `luma.did=brapih2xmppo8o6jtmk495jfucxr8l; luma.native-referrer=https%3A%2F%2Flu.ma%2F; luma.evt-KZ3GVPQwrc0OFpU.referred_by=hzdtCD; luma.auth-session-key=${this.authToken}`,
@@ -135,9 +141,10 @@ export class LumaClient {
       }
       const content = JSON.parse(el.innerHTML);
 
-      const realEventId = content.props.pageProps.initialData.data.api_id;
+      const realEventId: string =
+        content.props.pageProps.initialData.data.api_id;
 
-      const ticketKey =
+      const ticketKey: string =
         content.props.pageProps.initialData.data.guest_data.ticket_key;
 
       if (!realEventId || !ticketKey) {
@@ -193,12 +200,7 @@ export class LumaClient {
           `[Luma.event.getGuests] Non-ok response: status ${res.status}`
         );
       }
-      const data: {
-        entries: Guest[];
-        has_more: boolean;
-        /** looks like "usr-4GrEc2C38FpcMmE" */
-        next_cursor: string;
-      } = await res.json();
+      const data: GetLumaGuestsResponse = await res.json();
 
       return data;
     },

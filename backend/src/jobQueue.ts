@@ -5,6 +5,7 @@ type Job = {
   data: unknown;
   state: string;
   inserted: Date;
+  ok: boolean;
 };
 
 class JobQueue {
@@ -18,12 +19,17 @@ class JobQueue {
       state: 'NOT_STARTED',
       data: null,
       inserted: new Date(),
+      ok: true,
     };
 
-    return new Promise((res) =>
+    return new Promise((res, rej) =>
       this.events.addEventListener('jobDone', (job) => {
         if (job === this.jobs[jobId]) {
-          res(job.data as T);
+          if (job.ok) {
+            res(job.data as T);
+          } else {
+            rej();
+          }
         }
       })
     );
@@ -39,7 +45,9 @@ class JobQueue {
     try {
       console.log('executing job');
       job.data = await job.exec();
-    } catch (err) {}
+    } catch (err) {
+      job.ok = false;
+    }
 
     job.state = 'DONE';
 

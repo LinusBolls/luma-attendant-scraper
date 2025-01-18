@@ -1,17 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { getLinkedinProfile } from 'getLinkedinProfile';
 import { linkedinJobQueue } from 'jobQueue';
-import { LumaClient } from 'luma';
-
-const parseEventIdFromLumaUrl = (url: string): string | null => {
-  try {
-    const match = new URL(url).pathname.replace(/\//g, '');
-
-    return match;
-  } catch (err) {
-    throw new Error('failed to parse event id from luma url: ' + url);
-  }
-};
+import { GetLumaGuestsResponse, LumaClient } from 'luma';
 
 export async function routes(fastify: FastifyInstance): Promise<void> {
   fastify.get('/health', async (_, reply) => {
@@ -20,7 +10,6 @@ export async function routes(fastify: FastifyInstance): Promise<void> {
   fastify.post('/get-event-data', async (req, reply) => {
     try {
       const eventUrl = (req.body as any).eventUrl;
-
       const authToken = (req.body as any).authToken;
 
       if (!eventUrl || !authToken) {
@@ -34,34 +23,50 @@ export async function routes(fastify: FastifyInstance): Promise<void> {
 
       const luma = new LumaClient(authToken);
 
-      const event = await luma.event.getEvent(eventUrl);
+      let event: { eventId: string; ticketKey: string };
 
-      if (!event.ticketKey) {
-        reply.code(403).send({
+      try {
+        event = await luma.event.getEvent(eventUrl);
+      } catch (err) {
+        reply.code(502).send({
           error: {
-            message: 'Failed to get ticket key for event',
+            message: 'Failed to get event id or ticket key for event',
           },
         });
-        return;
       }
 
-      const lumaGuests = await luma.event.getGuests(
-        event.eventId,
-        event.ticketKey
-      );
+      let lumaGuests: GetLumaGuestsResponse;
 
-      const guests = await Promise.allSettled(
-        lumaGuests.entries.map(async (guest) => {
+      try {
+        lumaGuests = await luma.event.getGuests(
+          event!.eventId,
+          event!.ticketKey
+        );
+      } catch (err) {
+        reply.code(502).send({
+          error: {
+            message: 'Failed to get event id or ticket key for event',
+          },
+        });
+      }
+
+      const guests = await Promise.all(
+        lumaGuests!.entries.map(async (guest) => {
           if (!guest.linkedin_handle) {
             return { luma: guest, linkedin: null };
           }
-          return await linkedinJobQueue.execute(async () => {
-            const profileData = await getLinkedinProfile(
-              guest.linkedin_handle!
-            );
+          try {
+            return await linkedinJobQueue.execute(async () => {
+              const profileData = await getLinkedinProfile(
+                guest.linkedin_handle!
+              );
 
-            return { luma: guest, linkedin: profileData.data };
-          });
+              return { luma: guest, linkedin: profileData.data };
+            });
+          } catch (err) {
+            console.error('Failed to get linkedin profile for guest:', guest);
+            return { luma: guest, linkedin: null };
+          }
         })
       );
 
