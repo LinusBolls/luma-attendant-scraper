@@ -1,4 +1,5 @@
 import * as cookie from 'cookie';
+import { parse as parseHtml } from 'node-html-parser';
 
 export interface Guest {
   name: string;
@@ -27,7 +28,7 @@ export interface Guest {
  * @param {string} authToken - The token of the bot, looks like `usr-AkoQfAUWXN1KLyH.2cy8cwiqkbj5yb0xiapy`
  */
 export class LumaClient {
-  constructor(private authToken: string) {}
+  constructor(public authToken: string) {}
 
   public static async requestEmailCode(email: string) {
     await fetch('https://api.lu.ma/auth/email/start-with-email', {
@@ -99,6 +100,30 @@ export class LumaClient {
   }
 
   public readonly event = {
+    getEvent: async (eventId: string) => {
+      const url = 'https://lu.ma/' + eventId;
+
+      const res = await fetch(url, {
+        headers: {
+          Cookie: `luma.did=brapih2xmppo8o6jtmk495jfucxr8l; luma.native-referrer=https%3A%2F%2Flu.ma%2F; luma.evt-KZ3GVPQwrc0OFpU.referred_by=hzdtCD; luma.auth-session-key=${this.authToken}`,
+        },
+      });
+
+      const rawPage = await res.text();
+
+      const page = parseHtml(rawPage);
+
+      const el = page.querySelector('script#__NEXT_DATA__')!;
+
+      const content = JSON.parse(el.innerHTML);
+
+      const realEventId = content.props.pageProps.initialData.data.api_id
+
+      const ticketKey =
+        content.props.pageProps.initialData.data.guest_data.ticket_key;
+
+      return { eventId: realEventId, ticketKey };
+    },
     /**
      * @param eventId looks like `evt-KZ3GVPQwrc0OFpU`
      * @param ticketKey looks like `hzdtCD`

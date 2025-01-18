@@ -1,13 +1,16 @@
-import fs from 'fs';
-import { HTMLElement, parse as parseHtml } from 'node-html-parser';
-import OpenAI from 'openai';
+import fastifyCors from '@fastify/cors';
+import fastifyHelmet from '@fastify/helmet';
+import Fastify from 'fastify';
+import type { FastifyInstance } from 'fastify';
+import { parse as parseHtml } from 'node-html-parser';
 
-import { linkedinJobQueue } from './jobQueue';
 import { env } from './env';
+import { linkedinJobQueue } from './jobQueue';
 import { LinkedinClient } from './linkedin';
 import { parseCodeTags } from './linkedin/parseCodeTags';
 import { parseProfileSections } from './linkedin/requests/getProfileSections';
 import { LumaClient } from './luma';
+import { routes } from './routes';
 import { askQuestion } from './util/askQuestion';
 
 async function signIn() {
@@ -91,4 +94,33 @@ async function main() {
   // });
   // return response;
 }
-main();
+// main();
+
+export async function buildFastify(): Promise<FastifyInstance> {
+  const fastify = Fastify({ logger: true });
+
+  await fastify.register(fastifyCors, { origin: env.corsOrigins });
+  await fastify.register(fastifyHelmet);
+  await fastify.register(routes, { prefix: '/api/v1' });
+
+  return fastify;
+}
+
+async function maindings(): Promise<void> {
+  const fastify = await buildFastify();
+
+  fastify.listen({ port: env.port }, (err, address) => {
+    if (err) {
+      console.error(
+        `Error trying to start server at http://localhost:${env.port}:`,
+        err
+      );
+      process.exit(1);
+    }
+    const ipv4address = address.replace('[::1]', 'localhost');
+
+    // eslint-disable-next-line no-console
+    console.info('listening at', ipv4address + '/api/v1');
+  });
+}
+maindings();

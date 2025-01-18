@@ -24,6 +24,7 @@ const assertEnvInteger = (name: string) => {
 export const env = {
   port: assertEnvInteger('PORT'),
   publicUrl: assertEnvString('PUBLIC_SERVICE_URL'),
+  corsOrigins: assertEnvString('CORS_ORIGINS').split(','),
   openai: {
     apiKey: assertEnvString('OPENAI_API_KEY'),
   },
