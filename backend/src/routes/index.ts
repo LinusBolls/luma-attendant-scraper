@@ -7,6 +7,37 @@ export async function routes(fastify: FastifyInstance): Promise<void> {
   fastify.get('/health', async (_, reply) => {
     reply.send({ data: { ok: true } });
   });
+  fastify.post('/request-luma-otp', async (req, reply) => {
+    try {
+      const email = (req.body as any).email;
+
+      await LumaClient.requestEmailCode(email);
+    } catch (err) {
+      console.error(err);
+      reply.code(500).send({
+        error: {
+          message: 'Internal Server Error',
+        },
+      });
+    }
+  });
+  fastify.post('/login-with-luma-otp', async (req, reply) => {
+    try {
+      const email = (req.body as any).email;
+      const code = (req.body as any).code?.trim();
+
+      const { data, authToken } = await LumaClient.fromEmailCode(email, code);
+
+      reply.send({ data: { authToken, user: data.user } });
+    } catch (err) {
+      console.error(err);
+      reply.code(500).send({
+        error: {
+          message: 'Internal Server Error',
+        },
+      });
+    }
+  });
   fastify.post('/get-event-data', async (req, reply) => {
     try {
       const eventUrl = (req.body as any).eventUrl;
@@ -33,6 +64,7 @@ export async function routes(fastify: FastifyInstance): Promise<void> {
             message: 'Failed to get event id or ticket key for event',
           },
         });
+        return;
       }
 
       let lumaGuests: LumaGuest[];
@@ -48,6 +80,7 @@ export async function routes(fastify: FastifyInstance): Promise<void> {
             message: 'Failed to get event id or ticket key for event',
           },
         });
+        return;
       }
 
       const guests = await Promise.all(
