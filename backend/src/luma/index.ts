@@ -38,7 +38,7 @@ export class LumaClient {
   constructor(public authToken: string) {}
 
   public static async requestEmailCode(email: string) {
-    await fetch('https://api.lu.ma/auth/email/start-with-email', {
+    const res = await fetch('https://api.lu.ma/auth/email/start-with-email', {
       headers: {
         accept: 'application/json, text/plain, */*',
         'accept-language': 'en',
@@ -62,6 +62,39 @@ export class LumaClient {
       mode: 'cors',
       credentials: 'include',
     });
+    const data: {
+      is_new_user: boolean;
+      has_password: boolean;
+      has_name: boolean;
+      has_phone_number: boolean;
+    } = await res.json();
+
+    if (data.has_password) {
+      await fetch('https://api.lu.ma/auth/email/send-sign-in-code', {
+        headers: {
+          accept: 'application/json, text/plain, */*',
+          'accept-language': 'en',
+          'content-type': 'application/json',
+          priority: 'u=1, i',
+          'sec-ch-ua':
+            '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+          'sec-ch-ua-mobile': '?0',
+          'sec-ch-ua-platform': '"macOS"',
+          'sec-fetch-dest': 'empty',
+          'sec-fetch-mode': 'cors',
+          'sec-fetch-site': 'same-site',
+          'x-luma-client-type': 'luma-web',
+          'x-luma-client-version': '5247e4cbd7ebb4eca4dd4b0011e5dab38f0ea748',
+          'x-luma-web-url': 'https://lu.ma/signin',
+        },
+        referrer: 'https://lu.ma/',
+        referrerPolicy: 'strict-origin-when-cross-origin',
+        body: JSON.stringify({ email }),
+        method: 'POST',
+        mode: 'cors',
+        credentials: 'include',
+      });
+    }
   }
 
   public static async fromEmailCode(email: string, code: string) {
