@@ -118,7 +118,6 @@ export default function EventPage() {
 }
 
 function UserCard({ user }: { user: LumaGuest }) {
-
   const UserAvatar = user.avatar_url ? (
     <Image src={user.avatar_url} width={56} height={56} alt={user.name} className="w-full h-auto rounded-full aspect-square object-cover" />
   ) : (
@@ -126,24 +125,33 @@ function UserCard({ user }: { user: LumaGuest }) {
   );
 
   return (
-    <div
-      key={user.api_id}
-    >
+    <div key={user.api_id}>
       <div className="flex gap-4">
         <div className="w-14 h-14">{UserAvatar}</div>
         <div className="flex flex-col">
           <div className="font-medium">{user.name}</div>
-          <div className="text-sm text-gray-500">{user.timezone}</div>
-          {user.website && (
-            <a
-              href={user.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-blue-600 hover:underline"
-            >
-              Website
-            </a>
-          )}
+          <div className="flex gap-3">
+            {user.website && (
+              <a
+                href={user.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:underline"
+              >
+                Website
+              </a>
+            )}
+            {user.linkedin_handle && (
+              <a
+                href={`https://linkedin.com${user.linkedin_handle}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:underline"
+              >
+                LinkedIn
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ type InputProps = {
   type?: string;
   required?: boolean;
   className?: string;
+  onSubmit?: () => void;
 };
 
 export function Input({
@@ -14,15 +15,25 @@ export function Input({
   type = "text",
   required = false,
   className = "",
+  onSubmit,
 }: InputProps) {
   return (
-    <input
-      type={type}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      required={required}
-      className={`w-full px-4 py-3 rounded-full bg-white text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 ${className}`}
-    />
+    <div className="flex gap-3 items-center">
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        required={required}
+        className={`w-full px-4 py-3 rounded-full bg-[#787878] text-white placeholder-white font-['SF_Pro_Rounded'] focus:outline-none focus:ring-2 focus:ring-white/20 ${className}`}
+      />
+      <button 
+        onClick={onSubmit}
+        type="submit"
+        className="flex-shrink-0 w-[49px] h-[49px] hover:bg-[#888888] transition-colors flex items-center justify-center"
+      >
+        <img src="/arrow-up.svg" alt="Submit" width={49} height={49} />
+      </button>
+    </div>
   );
 } 
