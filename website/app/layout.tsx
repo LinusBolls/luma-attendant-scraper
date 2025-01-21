@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lumy",
-  description: "Network better with Lumy",
+  title: "whojoins.me",
+  description: "Network better with whojoins.me",
 };
 
 export default function RootLayout({

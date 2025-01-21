@@ -58,7 +58,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-dvh p-4 gap-4 flex flex-col items-center justify-center">
-      <h1 className="text-4xl font-bold">Lumy</h1>
+      <h1 className="text-4xl font-bold">whojoins.me</h1>
 
       {!codeSent ? (
 

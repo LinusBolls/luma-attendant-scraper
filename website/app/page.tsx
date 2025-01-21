@@ -18,7 +18,7 @@ export default function Home() {
 
   return (
     <div className="min-h-dvh p-4 gap-4 flex flex-col items-center justify-center">
-      <h1 className="text-4xl font-bold">Lumy</h1>
+      <h1 className="text-4xl font-bold">whojoins.me</h1>
       <form onSubmit={handleSubmit} className="w-full max-w-md">
         <Input
           value={eventUrl}

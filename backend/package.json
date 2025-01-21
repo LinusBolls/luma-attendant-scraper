@@ -1,5 +1,5 @@
 {
-  "name": "luma-scraper-backend",
+  "name": "whojoins.me-backend",
   "author": "https://github.com/LinusBolls",
   "module": "src/index.ts",
   "dependencies": {
