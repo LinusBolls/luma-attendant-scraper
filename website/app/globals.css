@@ -2,13 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'SF Pro Rounded';
+  src: local('SF Pro Rounded'), local('SF-Pro-Rounded'),
+       url('/fonts/SF-Pro-Rounded-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Rounded';
+  src: local('SF Pro Rounded Medium'), local('SF-Pro-Rounded-Medium'),
+       url('/fonts/SF-Pro-Rounded-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Rounded';
+  src: local('SF Pro Rounded Bold'), local('SF-Pro-Rounded-Bold'),
+       url('/fonts/SF-Pro-Rounded-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --background: #000000;
-  --foreground: #ffffff;
+  --background: #1A1A1A;
+  --foreground: #FFFFFF;
+  --searchbar: #787878;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'SF Pro Rounded', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }

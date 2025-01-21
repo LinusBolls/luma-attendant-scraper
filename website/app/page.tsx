@@ -8,8 +8,8 @@ export default function Home() {
   const [eventUrl, setEventUrl] = useState("");
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!eventUrl) return;
     
     const encodedUrl = encodeURIComponent(eventUrl);
@@ -24,6 +24,7 @@ export default function Home() {
           value={eventUrl}
           onChange={setEventUrl}
           placeholder="URL of your event"
+          onSubmit={handleSubmit}
         />
       </form>
     </div>
