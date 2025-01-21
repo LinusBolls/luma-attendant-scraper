@@ -1,7 +1,6 @@
 "use client";
 
-import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/Input";
 
@@ -30,3 +29,5 @@ export default function Home() {
     </div>
   );
 }
+
+// Test event URL: https://lu.ma/bkevcvsk

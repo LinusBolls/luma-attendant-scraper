@@ -1,143 +1,152 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import Image from "next/image";
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import type { LumaEvent, LumaGuest } from '@/lib/luma';
+import Image from 'next/image';
+function EventPageContent() {
+  const [eventDetails, setEventDetails] = useState<LumaEvent | null>(null);
+  const [guests, setGuests] = useState<LumaGuest[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-type Event = {
-    name: string;
-    url: string;
-    attendees: Person[];
-}
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const eventUrl = searchParams.get('url');
 
-type Person = {
-    name: string;
-    tagLine?: string;
-    company: string;
-    position: string;
-    imageUrl?: string;
-};
+  useEffect(() => {
+    const authToken = localStorage.getItem('lumaAuthToken');
 
-function PersonList({ people }: { people: Person[] }) {
-    return (
-        <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {people.map((person) => (
-                <li key={person.name}>
-                    <PersonRow person={person} />
-                </li>
-            ))}
-        </ul>
-    );
-}
-
-function PersonRow({ person }: { person: Person }) {
-    return (
-        <div className="flex items-center gap-4">
-            {person.imageUrl ? (
-                <Image src={person.imageUrl} alt={person.name} width={100} height={100} className="w-16 h-16 rounded-full mr-4" />
-            ) : (
-                <div className="w-16 h-16 rounded-full bg-gray-200"></div>
-            )}
-            <div>
-                <h3 className="text-xl font-bold">{person.name}</h3>
-                <div className="text-sm flex gap-1 px-3 bg-gray-400 rounded-full">
-                    <span>{person.company}</span>
-                    <span>•</span>
-                    <span>{person.position}</span>
-                </div>
-                {person.tagLine && <p className="text-sm text-slate-400">{person.tagLine}</p>}
-            </div>
-        </div>
-    );
-}
-
-const fetchPeople = async (eventUrl: string | null, router: any) => {
-    if (!eventUrl) {
-        router.push("/");
-        return;
-    }
-
-    const authToken = localStorage.getItem('authToken');
+    // Redirect if no auth token
     if (!authToken) {
-        router.push('/login?url=' + eventUrl);
-        return;
+      router.push('/login');
+      return;
     }
 
-    const response = await fetch("https://luma.bolls.dev/api/v1/get-event-data", {
-        headers: {
-            'content-type': 'application/json',
-            accept: 'application/json',
-        },
-        method: "POST",
-        body: JSON.stringify({
-            authToken,
-            eventUrl,
-        }),
-    });
+    // Redirect if no event URL
+    if (!eventUrl) {
+      router.push('/');
+      return;
+    }
 
-    if (!response.ok) throw new Error("Failed to fetch data");
+    const fetchGuests = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-    const data = await response.json();
-    return data;
+        // Get event details
+        const eventRes = await fetch(`/api/luma/event?url=${encodeURIComponent(eventUrl)}`, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        });
+
+        if (!eventRes.ok) {
+          const error = await eventRes.json();
+          throw new Error(error.message);
+        }
+        const data: LumaEvent = await eventRes.json();
+        setEventDetails(data);
+        // Get all guests
+        const guestsRes = await fetch(
+          `/api/luma/guests/all?eventId=${data.eventId}&ticketKey=${data.ticketKey}`,
+          {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          }
+        );
+
+        if (!guestsRes.ok) {
+          const error = await guestsRes.json();
+          throw new Error(error.message);
+        }
+
+        const guestList = await guestsRes.json();
+        setGuests(guestList);
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGuests();
+  }, [eventUrl, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-dvh p-4 flex items-center justify-center">
+        <p>Loading guests...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-dvh p-4">
+      
+      <div className="flex flex-col gap-2 pb-4">
+        <h1 className="text-2xl font-bold">{eventDetails?.eventName}</h1>
+        <p className="text-sm text-gray-500">{guests.length}Members</p>
+      </div>
+
+
+      {error && (
+        <div className="mb-8 text-red-500">
+          {error}
+        </div>
+      )}
+
+      {guests.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {guests.map((guest) => (
+            <UserCard key={guest.api_id} user={guest} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function EventPage() {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const eventUrl = searchParams.get("url");
-    const [people, setPeople] = useState<Person[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-
-    const event = {
-        name: "Test Event",
-        url: "https://lu.ma/bkevcvsk",
-        attendees: [],
-    }
-
-
-    // useEffect(() => {
-    //     setLoading(true);
-    //     fetchPeople(eventUrl, router).then((data) => {
-    //         console.log(`Successfully fetched data: ${data}`);
-    //         setPeople(data.attendees);
-    //         setLoading(false);
-    //     }).catch((err) => {
-    //         setError("Failed to load attendees");
-    //         setLoading(false);
-    //     });
-    // }, [eventUrl, router]);
-
-    return (
-        <div className="min-h-dvh p-4">
-            <div className="mb-2 flex justify-between items-center">
-                <button onClick={() => router.push("/")}>
-                    <h1 className="text-2xl font-bold">Lumy</h1>
-                </button>
-
-            </div>
-
-            <div className="outline outline-2 outline-gray-500 rounded-lg px-4 py-2">
-                <div className="text-white flex justify-between">
-                    <span className="font-bold">
-                        {event?.name}
-                    </span>
-                    <span className="font-bold">
-                        {event?.attendees.length}
-                    </span>
-                </div>
-                <span className="text-gray-500">
-                    {event?.url}
-                </span>
-            </div>
-
-
-            {loading && <p className="text-gray-500">Loading...</p>}
-            {error && <p className="text-red-500">{error}</p>}
-            {!loading && !error && <PersonList people={people} />}
-        </div>
-    );
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <EventPageContent />
+    </Suspense>
+  );
 }
 
+function UserCard({ user }: { user: LumaGuest }) {
+
+  const UserAvatar = user.avatar_url ? (
+    <Image src={user.avatar_url} width={56} height={56} alt={user.name} className="w-full h-auto rounded-full aspect-square object-cover" />
+  ) : (
+    <div className="w-full h-auto bg-gray-200 rounded-full aspect-square object-cover"></div>
+  );
+
+  return (
+    <div
+      key={user.api_id}
+    >
+      <div className="flex gap-4">
+        <div className="w-14 h-14">{UserAvatar}</div>
+        <div className="flex flex-col">
+          <div className="font-medium">{user.name}</div>
+          <div className="text-sm text-gray-500">{user.timezone}</div>
+          {user.website && (
+            <a
+              href={user.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Website
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Test event URL: https://lu.ma/bkevcvsk

@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'www.fillmurray.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'cdn.lu.ma',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.lumacdn.com',
+      },
     ],
   },
 };

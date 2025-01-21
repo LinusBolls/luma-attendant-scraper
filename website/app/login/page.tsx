@@ -7,53 +7,52 @@ import { Input } from "@/components/Input";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
-  const [isCodeSent, setIsCodeSent] = useState(false);
-  const [error, setError] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const requestOTP = async (e: React.FormEvent) => {
+  const requestCode = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
-    
+
     try {
-      const response = await fetch("https://luma.bolls.dev/api/v1/request-luma-otp", {
-        headers: {
-          'content-type': 'application/json',
-          accept: 'application/json',
-        },
+      const res = await fetch("/api/luma/auth/email", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-
-      if (!response.ok) throw new Error("Failed to send code");
       
-      setIsCodeSent(true);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message);
+      }
+      
+      setCodeSent(true);
+      setError(null);
     } catch (err) {
-      setError("Failed to send verification code");
+      setError((err as Error).message);
     }
   };
 
-  const verifyOTP = async (e: React.FormEvent) => {
+  const verifyCode = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
 
     try {
-      const response = await fetch("https://luma.bolls.dev/api/v1/login-with-luma-otp", {
-        headers: {
-          'content-type': 'application/json',
-          accept: 'application/json',
-        },
+      const res = await fetch("/api/luma/auth/verify", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code }),
       });
 
-      if (!response.ok) throw new Error("Invalid code");
-      
-      const data = await response.json();
-      localStorage.setItem('authToken', data.data.authToken);
-      router.push("/");
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message);
+      }
+
+      const { authToken } = await res.json();
+      localStorage.setItem("lumaAuthToken", authToken);
+      router.back();
     } catch (err) {
-      setError("Invalid verification code");
+      setError((err as Error).message);
     }
   };
 
@@ -61,8 +60,9 @@ export default function LoginPage() {
     <div className="min-h-dvh p-4 gap-4 flex flex-col items-center justify-center">
       <h1 className="text-4xl font-bold">Lumy</h1>
 
-      {!isCodeSent ? (
-        <form onSubmit={requestOTP} className="w-full max-w-md">
+      {!codeSent ? (
+
+        <form onSubmit={requestCode} className="w-full max-w-md">
           <Input
         type="email"
         value={email}
@@ -70,9 +70,12 @@ export default function LoginPage() {
         placeholder="Enter your email"
         required
       />
+      {error && <p>{error}</p>}
     </form>
+
   ) : (
-    <form onSubmit={verifyOTP} className="w-full max-w-md">
+
+    <form onSubmit={verifyCode} className="w-full max-w-md">
       <Input
         type="text"
         value={code}
@@ -84,5 +87,6 @@ export default function LoginPage() {
       </form>
     )}
     </div>
+    
   );
 }
