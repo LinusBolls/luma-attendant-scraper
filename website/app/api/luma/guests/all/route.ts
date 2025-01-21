@@ -1,4 +1,5 @@
-import { LumaClient } from '@/lib/luma';
+import { LumaEventService } from '@/lib/Luma/LumaEventService';
+import { LumaGuest } from '@/lib/Luma/Types';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -21,8 +22,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const client = new LumaClient(authToken);
-    const guests = await client.event.getAllGuests(eventId, ticketKey);
+    const guests: LumaGuest[] = await new LumaEventService(authToken).getAllGuests(eventId, ticketKey);
     return NextResponse.json(guests);
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });

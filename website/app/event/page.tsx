@@ -2,8 +2,9 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import type { LumaEvent, LumaGuest } from '@/lib/luma';
 import Image from 'next/image';
+import { LumaEvent, LumaGuest } from '@/lib/Luma/Types';
+
 function EventPageContent() {
   const [eventDetails, setEventDetails] = useState<LumaEvent | null>(null);
   const [guests, setGuests] = useState<LumaGuest[]>([]);
