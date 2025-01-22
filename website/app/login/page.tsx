@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/Input";
+import Logo from "@/components/Logo";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -71,7 +72,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-dvh p-4 gap-4 flex flex-col items-center justify-center">
-      <h1 className="text-4xl font-bold">whojoins.me</h1>
+      <Logo />
 
       {!codeSent ? (
         <form onSubmit={requestCode} className="w-full max-w-md">

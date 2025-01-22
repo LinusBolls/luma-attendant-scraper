@@ -1,5 +1,4 @@
 import { LumaEventService } from '@/lib/Luma/LumaEventService';
-import { LumaGuest } from '@/lib/Luma/Types';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -22,8 +21,29 @@ export async function GET(request: Request) {
       );
     }
 
-    const guests: LumaGuest[] = await new LumaEventService(authToken).getAllGuests(eventId, ticketKey);
-    return NextResponse.json(guests);
+    const encoder = new TextEncoder();
+    const stream = new TransformStream();
+    const writer = stream.writable.getWriter();
+
+    // Start streaming in the background
+    (async () => {
+      try {
+        for await (const guest of new LumaEventService(authToken).streamGuests(eventId, ticketKey)) {
+          await writer.write(encoder.encode(JSON.stringify(guest) + '\n'));
+        }
+      } catch (error) {
+        console.error('Streaming error:', error);
+      } finally {
+        await writer.close();
+      }
+    })();
+
+    return new Response(stream.readable, {
+      headers: {
+        'Content-Type': 'application/x-ndjson',
+        'Transfer-Encoding': 'chunked',
+      },
+    });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }

@@ -4,11 +4,11 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { LumaEvent, LumaGuest } from '@/lib/Luma/Types';
+import { motion, AnimatePresence } from "motion/react"
 
 function EventPageContent() {
   const [eventDetails, setEventDetails] = useState<LumaEvent | null>(null);
   const [guests, setGuests] = useState<LumaGuest[]>([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
@@ -32,7 +32,6 @@ function EventPageContent() {
 
     const fetchGuests = async () => {
       try {
-        setLoading(true);
         setError(null);
 
         // Get event details using the new consolidated endpoint
@@ -49,7 +48,7 @@ function EventPageContent() {
         const data: LumaEvent = await eventRes.json();
         setEventDetails(data);
 
-        // Get all guests
+        // Stream guests
         const guestsRes = await fetch(
           `/api/luma/guests/all?eventId=${data.eventId}&ticketKey=${data.ticketKey}`,
           {
@@ -64,31 +63,38 @@ function EventPageContent() {
           throw new Error(error.message);
         }
 
-        const guestList = await guestsRes.json();
-        setGuests(guestList);
+        const reader = guestsRes.body?.getReader();
+        if (!reader) throw new Error('No reader available');
+
+        const decoder = new TextDecoder();
+        const guestList: LumaGuest[] = [];
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n').filter(Boolean);
+          
+          for (const line of lines) {
+            const guest = JSON.parse(line);
+            guestList.splice(0, 0, guest);
+            setGuests([...guestList]); // Update state with each new guest
+          }
+        }
       } catch (err) {
         setError((err as Error).message);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchGuests();
   }, [eventUrl, router]);
 
-  if (loading) {
-    return (
-      <div className="min-h-dvh p-4 flex items-center justify-center">
-        <p>Loading guests...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-dvh p-4">
       <div className="flex flex-col gap-2 pb-4">
         <h1 className="text-2xl font-bold">{eventDetails?.eventName}</h1>
-        <p className="text-sm text-gray-500">{guests.length} Members</p>
+        <p className="text-sm text-gray-500">{guests.length}  Members</p>
       </div>
 
       {error && (
@@ -99,9 +105,24 @@ function EventPageContent() {
 
       {guests.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {guests.map((guest) => (
-            <UserCard key={guest.api_id} user={guest} />
-          ))}
+          <AnimatePresence mode="popLayout">
+            {guests.map((guest) => (
+              <motion.div 
+                key={guest.api_id}
+                layoutId={guest.api_id}
+                layout
+                initial={{ opacity: 0, backgroundColor: 'blue' }}
+                animate={{ opacity: 1, backgroundColor: 'transparent' }}
+                transition={{
+                  layout: { duration: 0.3 },
+                  opacity: { delay: 0.3, duration: 0.5 },
+                  backgroundColor: { delay: 0.3, duration: 0.5 },
+                }}
+              >
+                <UserCard user={guest} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
     </div>

@@ -46,18 +46,27 @@ export class LumaEventService {
         return res.json();
     }
 
-    async getAllGuests(eventId: string, ticketKey: string): Promise<LumaGuest[]> {
-        const guests: LumaGuest[] = [];
+    async *streamGuests(eventId: string, ticketKey: string): AsyncGenerator<LumaGuest, void, unknown> {
         let cursor: string | null = null;
         let hasMore = true;
 
         while (hasMore) {
             const data = await this.getGuests(eventId, ticketKey, cursor);
-            guests.push(...data.entries);
+            for (const guest of data.entries) {
+                // sleep for 250ms 
+                await new Promise(resolve => setTimeout(resolve, 250));
+                yield guest;
+            }
             cursor = data.next_cursor;
             hasMore = data.has_more;
         }
+    }
 
+    async getAllGuests(eventId: string, ticketKey: string): Promise<LumaGuest[]> {
+        const guests: LumaGuest[] = [];
+        for await (const guest of this.streamGuests(eventId, ticketKey)) {
+            guests.push(guest);
+        }
         return guests;
     }
 
