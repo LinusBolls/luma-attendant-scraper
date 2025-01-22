@@ -1,4 +1,4 @@
-import { LumaEvent, GetLumaGuestsResponse, LumaGuest } from "./Types";
+import { LumaEvent, GetLumaGuestsResponse, LumaGuest, GetLumaUserEventsResponse } from "./Types";
 import { LUMA_API, DEFAULT_HEADERS } from "./Utils";
 
 export class LumaEventService {
@@ -106,5 +106,33 @@ export class LumaEventService {
         }
 
         return `${baseUrl}?${params.toString()}`;
+    }
+
+    async getUserEvents(period: 'future' | 'past' = 'future', limit: number = 25): Promise<GetLumaUserEventsResponse> {
+        const res = await fetch(
+            `https://api.lu.ma/home/get-events?period=${period}&pagination_limit=${limit}`,
+            {
+                headers: {
+                    accept: 'application/json, text/plain, */*',
+                    'accept-language': 'en',
+                    'content-type': 'application/json',
+                    priority: 'u=1, i',
+                    'x-luma-client-type': 'luma-web',
+                    'x-luma-web-url': 'https://lu.ma/home',
+                    Cookie: `luma.auth-session-key=${this.authToken}`,
+                },
+                referrer: 'https://lu.ma/',
+                referrerPolicy: 'strict-origin-when-cross-origin',
+                method: 'GET',
+                mode: 'cors',
+                credentials: 'include',
+            }
+        );
+
+        if (!res.ok) {
+            throw new Error(`Failed to fetch user events: ${res.status}`);
+        }
+
+        return await res.json();
     }
 }
