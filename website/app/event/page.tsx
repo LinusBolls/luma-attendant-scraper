@@ -35,8 +35,8 @@ function EventPageContent() {
         setLoading(true);
         setError(null);
 
-        // Get event details
-        const eventRes = await fetch(`/api/luma/event?url=${encodeURIComponent(eventUrl)}`, {
+        // Get event details using the new consolidated endpoint
+        const eventRes = await fetch(`/api/luma/events?url=${encodeURIComponent(eventUrl)}`, {
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
@@ -48,6 +48,7 @@ function EventPageContent() {
         }
         const data: LumaEvent = await eventRes.json();
         setEventDetails(data);
+
         // Get all guests
         const guestsRes = await fetch(
           `/api/luma/guests/all?eventId=${data.eventId}&ticketKey=${data.ticketKey}`,
@@ -85,12 +86,10 @@ function EventPageContent() {
 
   return (
     <div className="min-h-dvh p-4">
-      
       <div className="flex flex-col gap-2 pb-4">
         <h1 className="text-2xl font-bold">{eventDetails?.eventName}</h1>
-        <p className="text-sm text-gray-500">{guests.length}Members</p>
+        <p className="text-sm text-gray-500">{guests.length} Members</p>
       </div>
-
 
       {error && (
         <div className="mb-8 text-red-500">

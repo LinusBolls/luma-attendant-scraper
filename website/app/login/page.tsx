@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/Input";
 
@@ -10,6 +10,13 @@ export default function LoginPage() {
   const [codeSent, setCodeSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const authToken = localStorage.getItem('lumaAuthToken');
+    if (authToken) {
+      router.push('/dashboard');
+    }
+  }, [router]);
 
   const requestCode = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -56,7 +63,7 @@ export default function LoginPage() {
 
       const { authToken } = await res.json();
       localStorage.setItem("lumaAuthToken", authToken);
-      router.push("/");
+      router.push("/dashboard");
     } catch (err) {
       setError((err as Error).message);
     }
