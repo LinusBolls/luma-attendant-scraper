@@ -1,4 +1,4 @@
-import { LumaEvent, GetLumaGuestsResponse, LumaGuest, GetLumaUserEventsResponse } from "./Types";
+import { LumaEvent, GetLumaGuestsResponse, LumaGuest, GetLumaUserEventsResponse, LumaEventPageData } from "./Types";
 import { LUMA_API, DEFAULT_HEADERS } from "./Utils";
 
 export class LumaEventService {
@@ -61,7 +61,7 @@ export class LumaEventService {
         return guests;
     }
 
-    private parseEventData(rawPage: string) {
+    private parseEventData(rawPage: string): LumaEventPageData {
         const scriptMatch = rawPage.match(
             /<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/
         );
@@ -73,7 +73,7 @@ export class LumaEventService {
         return JSON.parse(scriptMatch[1]);
     }
 
-    private mapToLumaEvent(content: any): LumaEvent {
+    private mapToLumaEvent(content: LumaEventPageData): LumaEvent {
         const { data } = content.props.pageProps.initialData;
         const eventData = data.event;
 

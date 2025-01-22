@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 type InputProps = {
   value: string;
   onChange: (value: string) => void;
@@ -25,14 +27,20 @@ export function Input({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className={`w-full px-4 py-3 rounded-full bg-[#787878] text-white placeholder-white font-['M_PLUS_Rounded_1c'] focus:outline-none focus:ring-2 focus:ring-white/20 ${className}`}
+        className={`w-full px-4 py-3 rounded-full bg-[#787878] text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-white/20 ${className}`}
       />
       <button 
         onClick={onSubmit}
         type="submit"
         className="flex-shrink-0 w-[49px] h-[49px] rounded-full bg-[#787878] hover:bg-[#888888] transition-colors flex items-center justify-center"
       >
-        <img src="/arrow-up.svg" alt="Submit" width={49} height={49} />
+        <Image 
+          src="/arrow-up.svg" 
+          alt="Submit" 
+          width={24} 
+          height={24} 
+          className="w-6 h-6"
+        />
       </button>
     </div>
   );

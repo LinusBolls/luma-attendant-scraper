@@ -64,3 +64,22 @@ export type LumaUserEvent = {
 export type GetLumaUserEventsResponse = {
     entries: LumaUserEvent[];
 };
+
+export type LumaEventPageData = {
+    props: {
+        pageProps: {
+            initialData: {
+                data: {
+                    api_id: string;
+                    event: {
+                        name: string;
+                        cover_url: string;
+                    };
+                    guest_data: {
+                        ticket_key: string;
+                    };
+                };
+            };
+        };
+    };
+};

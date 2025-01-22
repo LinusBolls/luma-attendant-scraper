@@ -1,26 +1,26 @@
-import type { Metadata } from "next";
-import "@/app/globals.css";
+import type { Metadata } from 'next';
+import { M_PLUS_Rounded_1c } from 'next/font/google';
+import './globals.css';
+
+const mPlusRounded1c = M_PLUS_Rounded_1c({
+  weight: '500',
+  subsets: ['latin'],
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
-  title: "whojoins.me",
-  description: "Network better with whojoins.me",
+  title: 'whojoins.me',
+  description: 'See who joins your Luma events',
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500&display=swap" rel="stylesheet" />
-      </head>
-      <body className="antialiased min-h-dvh">
-        {children}
-      </body>
+      <body className={mPlusRounded1c.className}>{children}</body>
     </html>
   );
 }
